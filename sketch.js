@@ -2,7 +2,7 @@ var canvas;
 var DP05, DP02, DP03;
 var totalPop, agePop, racePop;
 var eduPop, eduAttainment;
-var laborPop;
+var laborPop, femalePop, industryPop;
 
 function preload() {
   DP05 = new Array(8);
@@ -27,6 +27,9 @@ function setup() {
   agePop = new Array(8);
   eduPop = new Array(8);
   eduAttainment = new Array(8);
+  laborPop = new Array(8);
+  femalePop = new Array(8);
+  industryPop = new Array(8);
 
   // Load info into arrays
   for (var i = 0; i < DP05.length; i++) {
@@ -34,25 +37,49 @@ function setup() {
     DP02[i] = (DP02[i][2]).split(',');
     DP03[i] = (DP03[i][2]).split(',');
 
-    totalPop[i] = DP05[i][3];
+    totalPop[i] = parseFloat(DP05[i][3]);
+
     agePop[i] = new Array(13);
-    var i1 = 15;
-    for (var i2 = 0; i2 < 13; i2++) {
-      agePop[i][i2] = DP05[i][i1];
+    var i1 = 17;
+    for (var i2 = 0; i2 < agePop[i].length; i2++) {
+      agePop[i][i2] = parseFloat(DP05[i][i1]);
       i1 += 4;
     }
 
     eduPop[i] = new Array(6);
-    i1 = 207;
-    for (i2 = 0; i2 < 6; i2++) {
-      eduPop[i][i2] = DP02[i][i1];
-      i1 += 4;
-    }
-    for (i2 = 0; i2 < 8; i2++) {
-      eduAttainment[i][i2] = DP02[i][i1];
+    eduPop[i][0] = parseFloat(DP02[i][207]);
+    i1 = 213;
+    for (i2 = 1; i2 < eduPop[i].length; i2++) {
+      eduPop[i][i2] = parseFloat(DP02[i][i1]);
       i1 += 4;
     }
 
+    eduAttainment[i] = new Array(9);
+    eduAttainment[i][0] = parseFloat(DP02[i][231]);
+    i1 = 237;
+    for (i2 = 1; i2 < eduAttainment[i].length; i2++) {
+      eduAttainment[i][i2] = parseFloat(DP02[i][i1]);
+      i1 += 4;
+    }
+
+    laborPop[i] = new Array(5);
+    laborPop[i][0] = parseFloat(DP03[i][3]);
+    laborPop[i][1] = parseFloat(DP03[i][9]);
+    laborPop[i][2] = parseFloat(DP03[i][17]);
+    laborPop[i][3] = parseFloat(DP03[i][21]);
+    laborPop[i][4] = parseFloat(DP03[i][25]);
+
+    femalePop[i] = new Array(2);
+    femalePop[i][0] = parseFloat(DP03[i][39]);
+    femalePop[i][1] = parseFloat(DP03[i][45]);
+
+    industryPop[i] = new Array(14);
+    industryPop[i][0] = parseFloat(DP03[i][127]);
+    i1 = 133;
+    for (i2 = 1; i2 < industryPop[i].length; i2++) {
+      industryPop[i][i2] = parseFloat(DP03[i][i1]);
+      i1 += 4;
+    }
   }
 
 }
