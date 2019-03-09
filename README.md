@@ -1,3 +1,6 @@
+303965272
+1 dot = 3 million people
+
 
 
 Key for reading arrays created from data:
@@ -66,3 +69,5 @@ industryPop - percentages
 11 arts, entertainment, recreation, accommodation, and food services
 12 other services
 13 public administration
+
+popWorldArr - 2010 to 2019 world populations
