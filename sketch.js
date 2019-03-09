@@ -102,6 +102,11 @@ function draw() {
   //rect(width/2, height/2, 50, 50);
   //rect(40, 120, 120, 40);
   //arc(50, 55, 50, 50, 0, HALF_PI);
+  var time = millis();
+  if (time % 5000 < 20) {
+    year++;
+  }
+
   writeHeading();
   displayCircles();
 }
@@ -118,7 +123,7 @@ function initializeCircles() {
       text(this.label, this.xPos, this.yPos);
     }
   }
-  circles = new Array(20);
+  circles = new Array(19);
   var radius = .3 * height;
   var spacing = TWO_PI / (circles.length - 1);
   var a = .5*width;
@@ -127,6 +132,11 @@ function initializeCircles() {
   circles[0] = {label: "Start", xPos: a, yPos: b, size: 50, c: color(0)};
 
   for (var i = 1; i < circles.length; i++) {
+    if (i % 2 == 0)
+      radius = .4 * height;
+    else
+      radius = .25 * height;
+
     var x = a + radius * cos(angle);
     var y = b - radius * sin(angle);
 
@@ -185,33 +195,10 @@ function initializeCircles() {
       case 18:
         circles[18] = {label: "Unemployed", xPos: x, yPos: y, size: 50, c: color(0)};
         break;
-      case 19:
-        circles[19] = {label: "Not in Labor Force", xPos: x, yPos: y, size: 50, c: color(0)};
-        break;
     }
 
     angle -= spacing;
   }
-
-  circles[1] = {label: "Elementary School", xPos: x, yPos: y, size: 50, c: color(0)};
-  circles[2] = {label: "High School", xPos: .5*width, yPos: .2*height, size: 50, c: color(0)};
-  circles[3] = {label: "College", xPos: .62*width, yPos: .25*height, size: 50, c: color(0)};
-  circles[4] = {label: "Agriculture", xPos: .69*width, yPos: .38*height, size: 50, c: color(0)};
-  circles[5] = {label: "Construction", xPos: .72*width, yPos: .45*height, size: 50, c: color(0)};
-  circles[6] = {label: "Manufacturing", xPos: .70*width, yPos: .58*height, size: 50, c: color(0)};
-  circles[7] = {label: "Wholesale Trade", xPos: .67*width, yPos: .69*height, size: 50, c: color(0)};
-  circles[8] = {label: "Retail Trade", xPos: .64*width, yPos: .78*height, size: 50, c: color(0)};
-  /*circles[9] = {label: "Utilities", xPos: width/2, yPos: height/2, size: 50, c: color(0)};
-  circles[10] = {label: "Information", xPos: width/2, yPos: height/2, size: 50, c: color(0)};
-  circles[11] = {label: "Finance", xPos: width/2, yPos: height/2, size: 50, c: color(0)};
-  circles[12] = {label: "Science and Technology", xPos: width/2, yPos: height/2, size: 50, c: color(0)};
-  circles[13] = {label: "Education and Health", xPos: width/2, yPos: height/2, size: 50, c: color(0)};
-  circles[14] = {label: "Arts and Entertainment", xPos: width/2, yPos: height/2, size: 50, c: color(0)};
-  circles[15] = {label: "Public Administration", xPos: width/2, yPos: height/2, size: 50, c: color(0)};
-  circles[16] = {label: "Other Services", xPos: width/2, yPos: height/2, size: 50, c: color(0)};
-  circles[17] = {label: "Armed Forces", xPos: width/2, yPos: height/2, size: 50, c: color(0)};
-  circles[18] = {label: "Unemployed", xPos: width/2, yPos: height/2, size: 50, c: color(0)};
-  circles[19] = {label: "Not in Labor Force", xPos: width/2, yPos: height/2, size: 50, c: color(0)};*/
 }
 
 function writeHeading() {
