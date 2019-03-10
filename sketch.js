@@ -3,11 +3,12 @@ var DP05, DP02, DP03;
 var totalPop, agePop, racePop;
 var eduPop, eduAttainment;
 var laborPop, femalePop, industryPop;
-var year, popUSA, previousPop, popWorld, popWorldArr;
+var year, popUSA, previousPop, popWorld, popWorldArr, popGrowthUSA, popGrowthWorld;
 var dotConversion;
 var circle, circles;
 var dot, dots, numDots;
 var pCollege, pUnemployed, pArmedForces, pIndustry, pTotal; // probablities
+var lifeExpectancy;
 
 function preload() {
   DP05 = new Array(8);
@@ -92,6 +93,9 @@ function setup() {
   popUSA = totalPop[0];
   popWorldArr = [6.96, 7.04, 7.12, 7.21, 7.30, 7.38, 7.47, 7.55, 7.63]
   popWorld = popWorldArr[0];
+  lifeExpectancy = 79;
+  popGrowthUSA = 0.7;
+  popGrowthWorld = 1.07;
 
   //Make circles and dots
   initializeCircles();
@@ -120,6 +124,11 @@ function incrementYear() {
   if (i < totalPop.length) {
     popUSA = totalPop[year % 2010];
     popWorld = popWorldArr[year % 2010];
+  }
+
+  else {
+    popUSA += Math.round(popGrowthUSA * popUSA * .01);
+    popWorld = +((popWorld + +((popGrowthWorld * popWorld * .01).toFixed(2))).toFixed(2));
   }
 }
 
@@ -189,11 +198,23 @@ function createDots() {
 function initializeCircles() {
   circle = {
     display: function() {
+      var countDots = 0;
+      for (var i = 0; i < dots.length; i++) {
+        if (dots[i].age < lifeExpectancy && dots[i].label === this.label)
+          countDots++;
+      }
+      this.size = 8 * countDots;
+      if (this.size > 100) {
+        this.size = 140;
+      }
       noFill();
       stroke(this.c);
+      strokeWeight(2);
       ellipse(this.xPos, this.yPos, this.size, this.size);
-      fill(0);
-      textSize(12);
+
+      fill(this.c);
+      strokeWeight(1);
+      textSize(14);
       textAlign(CENTER);
       text(this.label, this.xPos, this.yPos);
     }
@@ -204,7 +225,7 @@ function initializeCircles() {
   var a = .5*width;
   var b = .5*height;
   var angle = HALF_PI;
-  circles[0] = {label: "Start", xPos: a, yPos: b, size: 50, c: color(0)};
+  circles[0] = {label: "Start", xPos: a, yPos: b, c: color(0)};
 
   for (var i = 1; i < circles.length; i++) {
     if (i % 2 == 0)
@@ -217,58 +238,58 @@ function initializeCircles() {
 
     switch(i) {
       case 1:
-        circles[1] = {label: "Elementary School", xPos: x, yPos: y, size: 50, c: color(0)};
+        circles[1] = {label: "Elementary School", xPos: x, yPos: y, c: color(30, 144, 255)};
         break;
       case 2:
-        circles[2] = {label: "High School", xPos: x, yPos: y, size: 50, c: color(0)};
+        circles[2] = {label: "High School", xPos: x, yPos: y, c: color(65, 105, 225)};
         break;
       case 3:
-        circles[3] = {label: "College", xPos: x, yPos: y, size: 50, c: color(0)};
+        circles[3] = {label: "College", xPos: x, yPos: y, c: color(0, 0, 205)};
       break;
       case 4:
-        circles[4] = {label: "Agriculture", xPos: x, yPos: y, size: 50, c: color(0)};
+        circles[4] = {label: "Agriculture", xPos: x, yPos: y, c: color(34, 139, 34)};
         break;
       case 5:
-        circles[5] = {label: "Construction", xPos: x, yPos: y, size: 50, c: color(0)};
+        circles[5] = {label: "Construction", xPos: x, yPos: y, c: color(139, 69, 19)};
         break;
       case 6:
-        circles[6] = {label: "Manufacturing", xPos: x, yPos: y, size: 50, c: color(0)};
+        circles[6] = {label: "Manufacturing", xPos: x, yPos: y, c: color(210, 105, 30)};
         break;
       case 7:
-        circles[7] = {label: "Wholesale Trade", xPos: x, yPos: y, size: 50, c: color(0)};
+        circles[7] = {label: "Wholesale Trade", xPos: x, yPos: y, c: color(106, 90, 205)};
         break;
       case 8:
-        circles[8] = {label: "Retail Trade", xPos: x, yPos: y, size: 50, c: color(0)};
+        circles[8] = {label: "Retail Trade", xPos: x, yPos: y, c: color(153, 50, 204)};
         break;
       case 9:
-        circles[9] = {label: "Utilities", xPos: x, yPos: y, size: 50, c: color(0)};
+        circles[9] = {label: "Utilities", xPos: x, yPos: y, c: color(49, 79, 79)};
         break;
       case 10:
-        circles[10] = {label: "Information", xPos: x, yPos: y, size: 50, c: color(0)};
+        circles[10] = {label: "Information", xPos: x, yPos: y, c: color(105, 105, 105)};
         break;
       case 11:
-        circles[11] = {label: "Finance", xPos: x, yPos: y, size: 50, c: color(0)};
+        circles[11] = {label: "Finance", xPos: x, yPos: y, c: color(10, 130, 180)};
         break;
       case 12:
-        circles[12] = {label: "Science and Technology", xPos: x, yPos: y, size: 50, c: color(0)};
+        circles[12] = {label: "Science and Technology", xPos: x, yPos: y, c: color(32, 178, 170)};
         break;
       case 13:
-        circles[13] = {label: "Education and Health", xPos: x, yPos: y, size: 50, c: color(0)};
+        circles[13] = {label: "Education and Health", xPos: x, yPos: y, c: color(255, 99, 71)};
         break;
       case 14:
-        circles[14] = {label: "Arts and Entertainment", xPos: x, yPos: y, size: 50, c: color(0)};
+        circles[14] = {label: "Arts and Entertainment", xPos: x, yPos: y, c: color(255, 0, 0)};
         break;
       case 15:
-        circles[15] = {label: "Other Services", xPos: x, yPos: y, size: 50, c: color(0)};
+        circles[15] = {label: "Other Services", xPos: x, yPos: y, c: color(139, 139, 131)};
         break;
       case 16:
-        circles[16] = {label: "Public Administration", xPos: x, yPos: y, size: 50, c: color(0)};
+        circles[16] = {label: "Public Administration", xPos: x, yPos: y, c: color(184, 134, 11)};
         break;
       case 17:
-        circles[17] = {label: "Armed Forces", xPos: x, yPos: y, size: 50, c: color(0)};
+        circles[17] = {label: "Armed Forces", xPos: x, yPos: y, c: color(85, 107, 47)};
         break;
       case 18:
-        circles[18] = {label: "Unemployed", xPos: x, yPos: y, size: 50, c: color(0)};
+        circles[18] = {label: "Unemployed", xPos: x, yPos: y, c: color(255, 99, 71)};
         break;
     }
 
@@ -279,41 +300,50 @@ function initializeCircles() {
 function initializeDots() {
   dot = {
     display: function() {
-      if (this.pos == 0) { //set initial position
-        for (var i = 0; i < circles.length; i++) {
-          if (this.label === circles[i].label) {
-            this.xPos = circles[i].xPos + random(-15, 15);
-            this.yPos = circles[i].yPos + random(-15, 15);
-            break;
-          }
+      for (var i = 0; i < circles.length; i++) { //find corresponding circle
+        if (this.label === circles[i].label) {
+          break;
         }
+      }
+      var limit = circles[i].size/4;
+
+      if (this.pos == 0) { //set initial position
+        this.xPos = circles[i].xPos + random(-15, 15);
+        this.yPos = circles[i].yPos + random(-15, 15);
         this.pos = 1; //position set
       }
 
       else if (this.pos == 1) { //random movement in place
-        this.xPos = this.xPos + random(-0.5, 0.5);
-        this.yPos = this.yPos + random(-0.5, 0.5);
+        if (this.xPos >= circles[i].xPos + limit)
+          this.xPos--
+        else if (this.xPos <= circles[i].xPos - limit)
+          this.xPos++;
+        else
+          this.xPos = this.xPos + random(-0.5, 0.5);
+
+        if (this.yPos >= circles[i].yPos + limit)
+          this.yPos--;
+        else if (this.yPos <= circles[i].yPos - limit)
+          this.yPos++;
+        else
+          this.yPos = this.yPos + random(-0.5, 0.5);
       }
 
       else if (this.pos == 2) { //moving towards circle
-        var index;
-        for (var i = 0; i < circles.length; i++) {
-          if (this.label === circles[i].label) {
-            index = i;
-            break;
-          }
-        }
         //check if dot is in circle
-        if ((this.xPos >= circles[index].xPos - 20 &&
-             this.xPos <= circles[index].xPos + 20) &&
-            (this.yPos >= circles[index].yPos - 20 &&
-             this.yPos <= circles[index].yPos + 20)) {
+        if ((this.xPos >= circles[i].xPos - limit &&
+             this.xPos <= circles[i].xPos + limit) &&
+            (this.yPos >= circles[i].yPos - limit &&
+             this.yPos <= circles[i].yPos + limit)) {
           this.pos = 1; // position set
         }
 
         else { //move dot
-          var yDiff = circles[index].yPos - this.yPos;
-          var xDiff = circles[index].xPos - this.xPos;
+          var yDiff = circles[i].yPos - this.yPos;
+          var xDiff = circles[i].xPos - this.xPos;
+          if (xDiff == 0) {
+            xDiff = .1;
+          }
           var slope = Math.abs(yDiff / xDiff);
 
           if (yDiff < 0) {
@@ -331,7 +361,12 @@ function initializeDots() {
         }
       }
 
-      fill(0, 0, 255);
+      var col = circles[i].c;
+      for (i = 0; i < this.age; i++) {
+        col = color(red(col), green(col), blue(col), alpha(col) - 2);
+      }
+
+      fill(col);
       noStroke();
       ellipse(this.xPos, this.yPos, 10, 10);
     }
@@ -370,7 +405,7 @@ function initializeDots() {
     index = dots.length;
     num = Math.round(numLabor * industryPop[0][j - 3] * .01);
     for (i = index; i < index + num; i++) {
-      dots[i] = {label: circles[j].label, age: Math.round(25, 100), pos: 0};
+      dots[i] = {label: circles[j].label, age: Math.round(random(25, 70)), pos: 0};
     }
   }
 
@@ -393,6 +428,7 @@ function initializeDots() {
 
 function writeHeading() {
   fill(0);
+  stroke(0);
   textAlign(LEFT);
   textSize(48);
   text(year, 10, 45);
@@ -409,6 +445,7 @@ function displayCircles() {
 
 function displayDots() {
   for (var i = 0; i < dots.length; i++) {
-    dot.display.call(dots[i]);
+    if (dots[i].age < lifeExpectancy)
+      dot.display.call(dots[i]);
   }
 }
