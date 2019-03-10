@@ -6,6 +6,7 @@ var laborPop, femalePop, industryPop;
 var year, popUSA, popWorld, popWorldArr;
 var dotConversion;
 var circle, circles;
+var dot, dots, numDots;
 
 function preload() {
   DP05 = new Array(8);
@@ -92,8 +93,8 @@ function setup() {
   popWorld = popWorldArr[0];
 
   //Main graphic
-  dotConversion = 3000000;
   initializeCircles();
+  initializeDots();
 }
 
 function draw() {
@@ -108,6 +109,7 @@ function draw() {
   }
 
   writeHeading();
+  displayDots();
   displayCircles();
 }
 
@@ -201,6 +203,63 @@ function initializeCircles() {
   }
 }
 
+function initializeDots() {
+  dot = {
+    display: function() {
+      fill(0, 0, 255);
+      noStroke();
+      if (this.pos == 1 && this.label != "moving") {
+        this.xPos = this.xPos + random(-0.5, 0.5);
+        this.yPos = this.yPos + random(-0.5, 0.5);
+      }
+      else if (this.pos == 0) {
+        for (var i = 0; i < circles.length; i++) {
+          if (this.label === circles[i].label) {
+            this.xPos = circles[i].xPos + random(-15, 15);
+            this.yPos = circles[i].yPos + random(-15, 15);
+            break;
+          }
+        }
+        this.pos = 1; //position set
+      }
+      ellipse(this.xPos, this.yPos, 10, 10);
+    }
+  }
+
+  dotConversion = 3000000;
+  dots = new Array(1);
+
+  numDots = Math.round(popUSA / dotConversion);
+  var num = Math.round(numDots * agePop[0][0] * .01); //start
+  for (var i = 0; i < num; i++) {
+    dots[i] = {label: "Start", age: Math.round(random(6)), pos: 0};
+  }
+
+  var numEdu = Math.round(eduPop[0][0] / dotConversion);
+  num = Math.round(numEdu * (eduPop[0][1] + eduPop[0][2] + eduPop[0][3]) * .01) //elementary
+  var index = dots.length;
+  for (i = index; i < index + num; i++) {
+    dots[i] = {label: "Elementary School", age: Math.round(random(6, 14)), pos: 0};
+  }
+
+  index = dots.length;
+  num = Math.round(numEdu * (eduPop[0][4]) * .01) //high
+  for (i = index; i < index + num; i++) {
+    dots[i] = {label: "High School", age: Math.round(random(14, 19)), pos: 0};
+  }
+
+  index = dots.length;
+  num = Math.round(numEdu * (eduPop[0][5]) * .01) //college
+  for (i = index; i < index + num; i++) {
+    dots[i] = {label: "College", age: Math.round(random(19, 26)), pos: 0};
+  }
+
+  for (var j = 4; j < circles.length; j++) {
+    index = dots.length;
+    num = Math.round()
+  }
+}
+
 function writeHeading() {
   fill(0);
   textAlign(LEFT);
@@ -214,5 +273,11 @@ function writeHeading() {
 function displayCircles() {
   for (var i = 0; i < circles.length; i++) {
     circle.display.call(circles[i]);
+  }
+}
+
+function displayDots() {
+  for (var i = 0; i < dots.length; i++) {
+    dot.display.call(dots[i]);
   }
 }
