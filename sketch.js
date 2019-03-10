@@ -3,10 +3,11 @@ var DP05, DP02, DP03;
 var totalPop, agePop, racePop;
 var eduPop, eduAttainment;
 var laborPop, femalePop, industryPop;
-var year, popUSA, popWorld, popWorldArr;
+var year, popUSA, previousPop, popWorld, popWorldArr;
 var dotConversion;
 var circle, circles;
 var dot, dots, numDots;
+var pCollege, pUnemployed, pArmedForces, pIndustry, pTotal; // probablities
 
 function preload() {
   DP05 = new Array(8);
@@ -92,25 +93,97 @@ function setup() {
   popWorldArr = [6.96, 7.04, 7.12, 7.21, 7.30, 7.38, 7.47, 7.55, 7.63]
   popWorld = popWorldArr[0];
 
-  //Main graphic
+  //Make circles and dots
   initializeCircles();
   initializeDots();
 }
 
 function draw() {
   background(255);
-  //ellipse(width/2,height/2,100,100);
-  //rect(width/2, height/2, 50, 50);
-  //rect(40, 120, 120, 40);
-  //arc(50, 55, 50, 50, 0, HALF_PI);
   var time = millis();
-  if (time % 5000 < 20) {
-    year++;
+  if (time % 1000 < 20) {
+    incrementYear();
+    updateProbabilities();
+    updateDots();
+    createDots();
   }
 
   writeHeading();
   displayDots();
   displayCircles();
+}
+
+function incrementYear() {
+  year++;
+  previousPop = popUSA;
+  var i = year % 2010;
+  if (i < totalPop.length) {
+    popUSA = totalPop[year % 2010];
+    popWorld = popWorldArr[year % 2010];
+  }
+}
+
+function updateProbabilities() {
+  var i = year % 2010;
+  if (i < DP05.length) {
+    pCollege = eduAttainment[i][5] + eduAttainment[i][6];
+    pUnemployed = laborPop[i][3];
+    pArmedForces = laborPop[i][4];
+    pIndustry = new Array(13);
+    pTotal = pCollege + pUnemployed + pArmedForces;
+    for (var j = 0; j < pIndustry.length; j++) {
+      pIndustry[j] = industryPop[i][j + 1];
+      pTotal += pIndustry[j];
+    }
+  }
+}
+
+function updateDots() {
+  //Update dots
+  for (var i = 0; i < dots.length; i++) {
+    dots[i].age++;
+    if (dots[i].label === "Start" && dots[i].age >= 4) { //go to elementary
+      dots[i].label = "Elementary School";
+      dots[i].pos = 2; //means moving
+    }
+    if (dots[i].label === "Elementary School" && dots[i].age >= 14) { //go to high
+      dots[i].label = "High School";
+      dots[i].pos = 2;
+    }
+
+    var num = random(0, 100);
+    if (dots[i].label === "High School" && dots[i].age >= 18 && num <= pCollege) { //college
+      dots[i].label = "College";
+      dots[i].pos = 2;
+    }
+
+    else if ((dots[i].label === "High School" && dots[i].age >= 18) ||
+             (dots[i].label === "College" && dots[i].age >= 24)) { //job
+      num = random(0, pTotal);
+      var prob = pUnemployed + pArmedForces;
+      if (num < pUnemployed)
+        dots[i].label = "Unemployed";
+      else if (num >= pUnemployed && num < prob)
+        dots[i].label = "Armed Forces";
+      else {
+        for (var j = 0; j < pIndustry.length; j++) {
+          if (num >= prob && num < prob + pIndustry[j]) {
+            dots[i].label = circles[j + 4].label;
+            break;
+          }
+          prob += pIndustry[length]
+        }
+      }
+      dots[i].pos = 2;
+    }
+  }
+}
+
+function createDots() {
+  var newDots = Math.round((popUSA - previousPop) / dotConversion);
+  for (var i = 0; i < newDots; i++) {
+    dots[dots.length] = {label: "Start", age: 0, pos: 0};
+  }
 }
 
 function initializeCircles() {
@@ -186,10 +259,10 @@ function initializeCircles() {
         circles[14] = {label: "Arts and Entertainment", xPos: x, yPos: y, size: 50, c: color(0)};
         break;
       case 15:
-        circles[15] = {label: "Public Administration", xPos: x, yPos: y, size: 50, c: color(0)};
+        circles[15] = {label: "Other Services", xPos: x, yPos: y, size: 50, c: color(0)};
         break;
       case 16:
-        circles[16] = {label: "Other Services", xPos: x, yPos: y, size: 50, c: color(0)};
+        circles[16] = {label: "Public Administration", xPos: x, yPos: y, size: 50, c: color(0)};
         break;
       case 17:
         circles[17] = {label: "Armed Forces", xPos: x, yPos: y, size: 50, c: color(0)};
@@ -206,13 +279,7 @@ function initializeCircles() {
 function initializeDots() {
   dot = {
     display: function() {
-      fill(0, 0, 255);
-      noStroke();
-      if (this.pos == 1 && this.label != "moving") {
-        this.xPos = this.xPos + random(-0.5, 0.5);
-        this.yPos = this.yPos + random(-0.5, 0.5);
-      }
-      else if (this.pos == 0) {
+      if (this.pos == 0) { //set initial position
         for (var i = 0; i < circles.length; i++) {
           if (this.label === circles[i].label) {
             this.xPos = circles[i].xPos + random(-15, 15);
@@ -222,6 +289,50 @@ function initializeDots() {
         }
         this.pos = 1; //position set
       }
+
+      else if (this.pos == 1) { //random movement in place
+        this.xPos = this.xPos + random(-0.5, 0.5);
+        this.yPos = this.yPos + random(-0.5, 0.5);
+      }
+
+      else if (this.pos == 2) { //moving towards circle
+        var index;
+        for (var i = 0; i < circles.length; i++) {
+          if (this.label === circles[i].label) {
+            index = i;
+            break;
+          }
+        }
+        //check if dot is in circle
+        if ((this.xPos >= circles[index].xPos - 20 &&
+             this.xPos <= circles[index].xPos + 20) &&
+            (this.yPos >= circles[index].yPos - 20 &&
+             this.yPos <= circles[index].yPos + 20)) {
+          this.pos = 1; // position set
+        }
+
+        else { //move dot
+          var yDiff = circles[index].yPos - this.yPos;
+          var xDiff = circles[index].xPos - this.xPos;
+          var slope = Math.abs(yDiff / xDiff);
+
+          if (yDiff < 0) {
+            this.yPos -= slope;
+          }
+          else {
+            this.yPos += slope;
+          }
+          if (xDiff < 0) {
+            this.xPos -= 1;
+          }
+          else {
+            this.xPos += 1;
+          }
+        }
+      }
+
+      fill(0, 0, 255);
+      noStroke();
       ellipse(this.xPos, this.yPos, 10, 10);
     }
   }
@@ -243,20 +354,40 @@ function initializeDots() {
   }
 
   index = dots.length;
-  num = Math.round(numEdu * (eduPop[0][4]) * .01) //high
+  num = Math.round(numEdu * eduPop[0][4] * .01); //high
   for (i = index; i < index + num; i++) {
     dots[i] = {label: "High School", age: Math.round(random(14, 19)), pos: 0};
   }
 
   index = dots.length;
-  num = Math.round(numEdu * (eduPop[0][5]) * .01) //college
+  num = Math.round(numEdu * eduPop[0][5] * .01); //college
   for (i = index; i < index + num; i++) {
-    dots[i] = {label: "College", age: Math.round(random(19, 26)), pos: 0};
+    dots[i] = {label: "College", age: Math.round(random(19, 24)), pos: 0};
   }
 
-  for (var j = 4; j < circles.length; j++) {
+  var numLabor = Math.round(industryPop[0][0] / dotConversion);
+  for (var j = 4; j < 17; j++) { //industries
     index = dots.length;
-    num = Math.round()
+    num = Math.round(numLabor * industryPop[0][j - 3] * .01);
+    for (i = index; i < index + num; i++) {
+      dots[i] = {label: circles[j].label, age: Math.round(25, 100), pos: 0};
+    }
+  }
+
+  index = dots.length;
+  numLabor = Math.round(laborPop[0][0] / dotConversion);
+  num = Math.round(numLabor * laborPop[0][3] * .01); //unemployed
+  for (i = index; i < index + num; i++) {
+    dots[i] = {label: "Unemployed", age: Math.round(random(19, 40)), pos: 0};
+  }
+
+  index = dots.length;
+  num = Math.round(numLabor * laborPop[0][4] * .01); //armed forces
+  if (num == 0) {
+    num = 1;
+  }
+  for (i = index; i < index + num; i++) {
+    dots[i] = {label: "Armed Forces", age: Math.round(random(19, 40)), pos: 0};
   }
 }
 
