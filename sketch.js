@@ -3,16 +3,16 @@ var DP05, DP02, DP03;
 var totalPop, agePop, racePop;
 var eduPop, eduAttainment;
 var laborPop, femalePop, industryPop;
-var earnings, femaleEarning, femaleEarning;
+var earnings, femaleEarning, femaleEarning, minWage;
 var year, popUSA, previousPop, popWorld, popWorldArr, popGrowthUSA, popGrowthWorld;
 var dotConversion;
 var circle, circles;
 var dot, dots, numDots;
-var pCollege, pUnemployed, pArmedForces, pIndustry, pTotal; // probablities
+var pCollege, pHighSchool, pGradSchool, pUnemployed, pArmedForces, pIndustry, pTotal;
 var lifeExpectancy;
 var numFemales, numMales;
 var robotMode;
-var nextArticle, xArticle, news, newsSet;
+var nextArticle, xArticle, news, newsSet, topNews;
 
 function preload() {
   DP05 = new Array(8);
@@ -112,27 +112,19 @@ function setup() {
   //Header data
   year = 2010;
   popUSA = totalPop[0];
-  popWorldArr = [6.96, 7.04, 7.12, 7.21, 7.30, 7.38, 7.47, 7.55, 7.63]
+  popWorldArr = [6.96, 7.04, 7.12, 7.21, 7.30, 7.38, 7.47, 7.55, 7.63];
+  minWage = 7.25;
   popWorld = popWorldArr[0];
   lifeExpectancy = 79;
   popGrowthUSA = 0.7;
   popGrowthWorld = 1.07;
+  pHighSchool = eduAttainment[0][3];
+  pCollege = eduAttainment[0][6];
+  pGradSchool = eduAttainment[0][7];
 
   //News data
-  /*news = new Array(9);
-  news[0] = "The jobs market hits a post-recession bottom of 129,655,000 payroll employees";//["barack obama's healthcare bill passed by congress",
-            // "barack Obama commits $100,000,000 to help Haiti recovery"
-  news[1] = "Barack Obama unveils the American Jobs Act to a joint-session of Congress";//["federal government predicts that the Medicare hospital fund will run out in 2024",
-             //];
-  news[2] = "San Francisco raises the minimum wage within its jurisdiction to over $10 per hour";
-  news[3] = "unemployment rate falls to 5-year low of 7 percent as employers added 203,000 jobs";
-  news[4] = "Numerous provisions of Obamacare go into effect.";
-  news[5] = "All combat roles in the United States military must be opened to women by April 1"
-  news[6] = "President Obama formally endorses Hillary Clinton for the Democratic presidential nomination"
-  news[7] = "The 115th United States Congress confirms the Electoral College victory of Donald Trump in the 2016 presidential election"
-  news[8] = "#Metoo moment";
-  robotMode = false;*/
-  var newsSet = false;
+  //var newsSet = false;
+  topNews = new Array();
   nextArticle = "";
 
   //Make circles and dots
@@ -148,14 +140,15 @@ function draw() {
     updateProbabilities();
     updateDots();
     createDots();
-    //updatePi();
   }
 
   writeNews();
+  writeTopNews();
   writeHeading();
   displayDots();
   displayCircles();
-  displayPi();
+  displayMinWage();
+  displayMF();
 }
 
 function incrementYear() {
@@ -179,7 +172,6 @@ function writeHeading() {
   rect(0, 0, 130, 100);
 
   fill(0);
-  stroke(0);
   textAlign(LEFT);
   textSize(48);
   text(year, 10, 45);
@@ -203,6 +195,26 @@ function writeNews() {
   xArticle -= 2;
 }
 
+function writeTopNews() {
+  var diameter = 150;
+  var xPos = width - 2.5 * diameter;
+  var yPos = 100;
+
+  fill(0);
+  noStroke();
+  textSize(14);
+  textAlign(LEFT);
+  text("Top News:", xPos, yPos);
+
+  var str = "";
+  for (var i = 0; i < topNews.length; i++) {
+    str = str + topNews[i].toUpperCase() + "\n";
+  }
+  yPos += 20;
+  fill(200, 200, 200);
+  text(str, xPos, yPos);
+}
+
 function displayCircles() {
   for (var i = 0; i < circles.length; i++) {
     circle.display.call(circles[i]);
@@ -216,8 +228,79 @@ function displayDots() {
   }
 }
 
+function displayMinWage() {
+  var diameter = 150;
+  var xPos = width - 2.5 * diameter;
+  var yPos = height / 2 - 70;
+
+  fill(0);
+  noStroke();
+  textSize(14);
+  textAlign(LEFT);
+  text("Educational Attainment", xPos, yPos - 20);
+  text("Federal Minimum Wage", xPos + diameter + 30, yPos - 20);
+
+  var col1 = color(65, 105, 225);
+  var col2 = color(0, 0, 205);
+  var col3 = color(0, 0, 105);
+  drawBarGraph(pHighSchool, pCollege, pGradSchool,
+               col1, col2, col3, xPos, yPos, diameter);
+
+  xPos += (3 * diameter / 2) + 25;
+  yPos += diameter / 2;
+  fill(143, 40, 194);
+  var di = minWage * 13;
+  if (di > diameter) {
+    di = diameter;
+  }
+  ellipse(xPos, yPos, di, di);
+  fill(255);
+  textAlign(CENTER);
+  text("$" + minWage, xPos, yPos);
+}
+
+function drawBarGraph(var1, var2, var3, c1, c2, c3, xPos, yPos, diameter) {
+  stroke(0);
+  line(xPos, yPos, xPos, yPos + diameter);
+  line(xPos, yPos + diameter, xPos + diameter, yPos + diameter);
+
+  var numBars = 3;
+  if (var3 == 0) {
+    numBars = 2;
+  }
+  yPos += diameter;
+  xPos += diameter / (numBars + 1) - 10;
+
+  var max = Math.max(var1, var2);
+  max = Math.max(max, var3);
+
+  if (max == var1) {
+    var h1 = diameter - 10;
+    var h2 = (diameter - 10) * var2 / var1;
+    var h3 = (diameter - 10) * var3 / var1;
+  }
+
+  else if (max == var2) {
+    var h1 = (diameter - 10) * var1 / var2 ;
+    var h2 = diameter - 10;
+    var h3 = (diameter - 10) * var3 / var2;
+  }
+
+  noStroke();
+  fill(c1);
+  rect(xPos, yPos - h1, 20, h1);
+  xPos += diameter / (numBars + 1);
+  fill(c2);
+  rect(xPos, yPos - h2, 20, h2);
+  if (var3 > 0) {
+    xPos += diameter / (numBars + 1);
+    fill(c3);
+    rect(xPos, yPos - h3, 20, h3);
+  }
+}
+
 //source for pi chart: https://processing.org/examples/piechart.html
-function displayPi() {
+function displayMF() {
   var i = year % 2010;
   if (i < DP05.length) {
     numFemales = Math.round(femalePop[i][0] * femalePop[i][1] * .01);
@@ -237,9 +320,9 @@ function displayPi() {
   var angle = -1 * HALF_PI;
   var diameter = 150;
   var xPos = width - 2 * diameter;
-  var yPos = height - 160;
+  var yPos = height - 140;
   fill(0);
-  stroke(0);
+  noStroke();
   textSize(14);
   text("Labor Force", xPos, yPos - 90);
   text("Median Wage", xPos + diameter + 25, yPos - 90);
@@ -266,25 +349,18 @@ function displayPi() {
   text("Female", xKey, yKey + 15);
 
   //Bar graph
-  var maleHeight = diameter - 10;
-  var femaleHeight = (diameter - 10) * femaleEarning / maleEarning;
   xPos = xPos + (diameter / 2) + 25;
   yPos = yPos - (diameter / 2);
-  line(xPos, yPos, xPos, yPos + diameter);
-  line(xPos, yPos + diameter, xPos + diameter, yPos + diameter);
-  yPos += diameter;
-  xPos += diameter / 3 - 10;
-  fill(maleColor);
-  rect(xPos, yPos - maleHeight, 20, maleHeight);
-  xPos += diameter / 3;
-  fill(femaleColor);
-  rect(xPos, yPos - femaleHeight, 20, femaleHeight);
+  drawBarGraph(femaleEarning, maleEarning, 0, maleColor, femaleColor, color(0),
+               xPos, yPos, diameter);
 }
 
 function updateProbabilities() {
   var i = year % 2010;
   if (i < DP05.length) {
-    pCollege = eduAttainment[i][5] + eduAttainment[i][6];
+    pCollege = eduAttainment[i][6];
+    pHighSchool = eduAttainment[i][3];
+    pGradSchool = eduAttainment[i][7];
     pUnemployed = laborPop[i][3];
     pArmedForces = laborPop[i][4];
     pIndustry = new Array(13);
@@ -300,7 +376,7 @@ function updateDots() {
   //Update dots
   for (var i = 0; i < dots.length; i++) {
     dots[i].age++;
-    if (dots[i].label === "Start" && dots[i].age >= 4) { //go to elementary
+    if (dots[i].label === "Birth" && dots[i].age >= 4) { //go to elementary
       dots[i].label = "Elementary School";
       dots[i].pos = 2; //means moving
     }
@@ -341,6 +417,7 @@ function newArticle() {
   var title = document.getElementById("article").value;
   nextArticle = title;
   xArticle = width;
+  topNews[topNews.length] = title;
 
   title = title.toLowerCase();
   if (title.includes("robot")) {
@@ -351,7 +428,7 @@ function newArticle() {
 function createDots() {
   var newDots = Math.round((popUSA - previousPop) / dotConversion);
   for (var i = 0; i < newDots; i++) {
-    dots[dots.length] = {label: "Start", age: 0, pos: 0};
+    dots[dots.length] = {label: "Birth", age: 0, pos: 0};
   }
 }
 
@@ -364,8 +441,8 @@ function initializeCircles() {
           this.countDots++;
       }
       this.size = 8 * this.countDots + 5;
-      if (this.size > 150) {
-        this.size = 150;
+      if (this.size > 100) {
+        this.size = 100;
       }
       noFill();
       stroke(this.c);
@@ -373,7 +450,7 @@ function initializeCircles() {
       ellipse(this.xPos, this.yPos, this.size, this.size);
 
       fill(this.c);
-      strokeWeight(1);
+      noStroke();
       textSize(14);
       textAlign(CENTER);
       text(this.label, this.xPos, this.yPos);
@@ -385,7 +462,7 @@ function initializeCircles() {
   var a = .35*width;
   var b = .55*height;
   var angle = HALF_PI;
-  circles[0] = {label: "Start", xPos: a, yPos: b, c: color(0)};
+  circles[0] = {label: "Birth", xPos: a, yPos: b, c: color(0)};
 
   for (var i = 1; i < circles.length; i++) {
     if (i % 2 == 0)
@@ -543,7 +620,7 @@ function initializeDots() {
   numDots = Math.round(popUSA / dotConversion);
   var num = Math.round(numDots * agePop[0][0] * .01); //start
   for (var i = 0; i < num; i++) {
-    dots[i] = {label: "Start", age: Math.round(random(6)), pos: 0};
+    dots[i] = {label: "Birth", age: Math.round(random(6)), pos: 0};
   }
 
   var numEdu = Math.round(eduPop[0][0] / dotConversion);
