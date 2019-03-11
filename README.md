@@ -54,6 +54,10 @@ femalePop
 0 #females 16 and over
 1 % females in labor
 
+earnings
+0 median male earnings
+1 median female earnings
+
 industryPop - percentages
 0 #ppl employed 16 and over
 1 agriculture, forestry, fishing and hunting, mining

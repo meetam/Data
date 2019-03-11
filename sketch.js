@@ -3,12 +3,14 @@ var DP05, DP02, DP03;
 var totalPop, agePop, racePop;
 var eduPop, eduAttainment;
 var laborPop, femalePop, industryPop;
+var earnings, femaleEarning, femaleEarning;
 var year, popUSA, previousPop, popWorld, popWorldArr, popGrowthUSA, popGrowthWorld;
 var dotConversion;
 var circle, circles;
 var dot, dots, numDots;
 var pCollege, pUnemployed, pArmedForces, pIndustry, pTotal; // probablities
 var lifeExpectancy;
+var numFemales, numMales;
 
 function preload() {
   DP05 = new Array(8);
@@ -26,7 +28,7 @@ function preload() {
 }
 
 function setup() {
-  canvas = createCanvas(window.innerWidth, window.innerHeight);
+  canvas = createCanvas(window.innerWidth - 150, window.innerHeight);
 
   // Initialize Arrays
   totalPop = new Array(8);
@@ -36,6 +38,7 @@ function setup() {
   laborPop = new Array(8);
   femalePop = new Array(8);
   industryPop = new Array(8);
+  earnings = new Array(8);
 
   // Load info into arrays
   for (var i = 0; i < DP05.length; i++) {
@@ -86,6 +89,10 @@ function setup() {
       industryPop[i][i2] = parseFloat(DP03[i][i1]);
       i1 += 4;
     }
+
+    earnings[i] = new Array(2);
+    earnings[i][0] = parseFloat(DP03[i][371]);
+    earnings[i][1] = parseFloat(DP03[i][375]);
   }
 
   //Header data
@@ -110,11 +117,13 @@ function draw() {
     updateProbabilities();
     updateDots();
     createDots();
+    //updatePi();
   }
 
   writeHeading();
   displayDots();
   displayCircles();
+  displayPi();
 }
 
 function incrementYear() {
@@ -130,6 +139,95 @@ function incrementYear() {
     popUSA += Math.round(popGrowthUSA * popUSA * .01);
     popWorld = +((popWorld + +((popGrowthWorld * popWorld * .01).toFixed(2))).toFixed(2));
   }
+}
+
+function writeHeading() {
+  fill(0);
+  stroke(0);
+  textAlign(LEFT);
+  textSize(48);
+  text(year, 10, 45);
+  textSize(20);
+  text("USA Population: " + popUSA, 10, 80);
+  text("World Population: " + popWorld + " billion", 10, 105);
+}
+
+function displayCircles() {
+  for (var i = 0; i < circles.length; i++) {
+    circle.display.call(circles[i]);
+  }
+}
+
+function displayDots() {
+  for (var i = 0; i < dots.length; i++) {
+    if (dots[i].age < lifeExpectancy)
+      dot.display.call(dots[i]);
+  }
+}
+
+//source for pi chart: https://processing.org/examples/piechart.html
+function displayPi() {
+  var i = year % 2010;
+  if (i < DP05.length) {
+    numFemales = Math.round(femalePop[i][0] * femalePop[i][1] * .01);
+    numMales = Math.round(laborPop[i][0] * laborPop[i][1] * .01) - numFemales;
+    var total = numFemales + numMales;
+    numFemales = TWO_PI * numFemales / total;
+    numMales = TWO_PI - numFemales;
+
+    femaleEarning = earnings[i][1];
+    maleEarning = earnings[i][0];
+  }
+
+  var maleColor = color(154, 205, 50);
+  var femaleColor = color(250, 128, 114);
+
+  //Pi chart
+  var angle = -1 * HALF_PI;
+  var diameter = 150;
+  var xPos = 90;
+  var yPos = height - 160;
+  fill(0);
+  stroke(0);
+  textSize(14);
+  text("Labor Force", xPos, yPos - 90);
+  text("Median Wage", xPos + diameter + 25, yPos - 90);
+  fill(femaleColor);
+  arc(xPos, yPos, diameter, diameter, angle, angle + numFemales);
+  angle += numFemales;
+  fill(maleColor);
+  arc(xPos, yPos, diameter, diameter, angle, angle + numMales);
+
+  //Key
+  textAlign(LEFT);
+  var xKey = xPos - diameter / 2 + 40;
+  var yKey = yPos + diameter / 2 + 20;
+  fill(maleColor);
+  rect(xKey, yKey, 20, 20);
+  fill(0);
+  xKey += 30;
+  text("Male", xKey, yKey + 15);
+  xKey += 60;
+  fill(femaleColor);
+  rect(xKey, yKey, 20, 20);
+  fill(0);
+  xKey += 30;
+  text("Female", xKey, yKey + 15);
+
+  //Bar graph
+  var maleHeight = diameter - 10;
+  var femaleHeight = (diameter - 10) * femaleEarning / maleEarning;
+  xPos = xPos + (diameter / 2) + 25;
+  yPos = yPos - (diameter / 2);
+  line(xPos, yPos, xPos, yPos + diameter);
+  line(xPos, yPos + diameter, xPos + diameter, yPos + diameter);
+  yPos += diameter;
+  xPos += diameter / 3 - 10;
+  fill(maleColor);
+  rect(xPos, yPos - maleHeight, 20, maleHeight);
+  xPos += diameter / 3;
+  fill(femaleColor);
+  rect(xPos, yPos - femaleHeight, 20, femaleHeight);
 }
 
 function updateProbabilities() {
@@ -172,11 +270,11 @@ function updateDots() {
       var prob = pUnemployed + pArmedForces;
       if (num < pUnemployed)
         dots[i].label = "Unemployed";
-      else if (num >= pUnemployed && num < prob)
+      else if ((num >= pUnemployed && num < prob) || circles[17].countDots == 0)
         dots[i].label = "Armed Forces";
       else {
         for (var j = 0; j < pIndustry.length; j++) {
-          if (num >= prob && num < prob + pIndustry[j]) {
+          if ((num >= prob && num < prob + pIndustry[j]) || circles[j + 4].countDots == 0) {
             dots[i].label = circles[j + 4].label;
             break;
           }
@@ -198,12 +296,12 @@ function createDots() {
 function initializeCircles() {
   circle = {
     display: function() {
-      var countDots = 0;
+      this.countDots = 0;
       for (var i = 0; i < dots.length; i++) {
         if (dots[i].age < lifeExpectancy && dots[i].label === this.label)
-          countDots++;
+          this.countDots++;
       }
-      this.size = 8 * countDots;
+      this.size = 8 * this.countDots;
       if (this.size > 100) {
         this.size = 140;
       }
@@ -339,24 +437,29 @@ function initializeDots() {
         }
 
         else { //move dot
-          var yDiff = circles[i].yPos - this.yPos;
-          var xDiff = circles[i].xPos - this.xPos;
-          if (xDiff == 0) {
-            xDiff = .1;
+          if (this.label == "Elementary School") {
+            this.yPos--;
           }
-          var slope = Math.abs(yDiff / xDiff);
+          else {
+            var yDiff = circles[i].yPos - this.yPos;
+            var xDiff = circles[i].xPos - this.xPos;
+            if (xDiff == 0) {
+              xDiff = .1;
+            }
+            var slope = Math.abs(yDiff / xDiff);
 
-          if (yDiff < 0) {
-            this.yPos -= slope;
-          }
-          else {
-            this.yPos += slope;
-          }
-          if (xDiff < 0) {
-            this.xPos -= 1;
-          }
-          else {
-            this.xPos += 1;
+            if (yDiff < 0) {
+              this.yPos -= slope;
+            }
+            else {
+              this.yPos += slope;
+            }
+            if (xDiff < 0) {
+              this.xPos -= 1;
+            }
+            else {
+              this.xPos += 1;
+            }
           }
         }
       }
@@ -423,29 +526,5 @@ function initializeDots() {
   }
   for (i = index; i < index + num; i++) {
     dots[i] = {label: "Armed Forces", age: Math.round(random(19, 40)), pos: 0};
-  }
-}
-
-function writeHeading() {
-  fill(0);
-  stroke(0);
-  textAlign(LEFT);
-  textSize(48);
-  text(year, 10, 45);
-  textSize(20);
-  text("USA Population: " + popUSA, 10, 80);
-  text("World Population: " + popWorld + " billion", 10, 105);
-}
-
-function displayCircles() {
-  for (var i = 0; i < circles.length; i++) {
-    circle.display.call(circles[i]);
-  }
-}
-
-function displayDots() {
-  for (var i = 0; i < dots.length; i++) {
-    if (dots[i].age < lifeExpectancy)
-      dot.display.call(dots[i]);
   }
 }

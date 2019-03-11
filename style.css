@@ -1,0 +1,33 @@
+/* Source: https://github.com/processing/p5.js/wiki/Positioning-your-canvas */
+
+html, body {
+  height: 100%;
+}
+
+body {
+  flex-direction: row-reverse;
+  justify-content: center;
+
+  margin: 0;
+  display: flex;
+
+  // This centers our sketch horizontally.
+  justify-content: right;
+
+  // This centers our sketch vertically.
+  align-items: right;
+}
+
+#box {
+  /*height: 200px;
+  font-size: 21pt;*/
+}
+  /*margin: 0;
+  display: flex;
+
+  //This centers our sketch horizontally.
+  justify-content: end;
+
+  //This centers our sketch vertically.
+  align-items: left;*/
+/*}*/
