@@ -11,6 +11,8 @@ var dot, dots, numDots;
 var pCollege, pUnemployed, pArmedForces, pIndustry, pTotal; // probablities
 var lifeExpectancy;
 var numFemales, numMales;
+var robotMode;
+var nextArticle, xArticle, news, newsSet;
 
 function preload() {
   DP05 = new Array(8);
@@ -25,6 +27,18 @@ function preload() {
     DP03[i] = loadStrings('DP03/ACS_' + index + '_5YR_DP03_with_ann.csv');
     index++;
   }
+
+  //Load news
+  var url = "https://newsapi.org/v2/top-headlines?sources=the-new-york-times&apiKey=d35b0088a38e45f1ad33040603272634";
+  news = new Array(1);
+  fetch(url).then(response => {
+    return response.json();
+  }).then(data => {
+    // Work with JSON data here
+    news = data;
+  }).catch(err => {
+    // Do something for an error here
+  });
 }
 
 function setup() {
@@ -104,6 +118,23 @@ function setup() {
   popGrowthUSA = 0.7;
   popGrowthWorld = 1.07;
 
+  //News data
+  /*news = new Array(9);
+  news[0] = "The jobs market hits a post-recession bottom of 129,655,000 payroll employees";//["barack obama's healthcare bill passed by congress",
+            // "barack Obama commits $100,000,000 to help Haiti recovery"
+  news[1] = "Barack Obama unveils the American Jobs Act to a joint-session of Congress";//["federal government predicts that the Medicare hospital fund will run out in 2024",
+             //];
+  news[2] = "San Francisco raises the minimum wage within its jurisdiction to over $10 per hour";
+  news[3] = "unemployment rate falls to 5-year low of 7 percent as employers added 203,000 jobs";
+  news[4] = "Numerous provisions of Obamacare go into effect.";
+  news[5] = "All combat roles in the United States military must be opened to women by April 1"
+  news[6] = "President Obama formally endorses Hillary Clinton for the Democratic presidential nomination"
+  news[7] = "The 115th United States Congress confirms the Electoral College victory of Donald Trump in the 2016 presidential election"
+  news[8] = "#Metoo moment";
+  robotMode = false;*/
+  var newsSet = false;
+  nextArticle = "";
+
   //Make circles and dots
   initializeCircles();
   initializeDots();
@@ -120,6 +151,7 @@ function draw() {
     //updatePi();
   }
 
+  writeNews();
   writeHeading();
   displayDots();
   displayCircles();
@@ -142,6 +174,10 @@ function incrementYear() {
 }
 
 function writeHeading() {
+  fill(255);
+  noStroke();
+  rect(0, 0, 130, 100);
+
   fill(0);
   stroke(0);
   textAlign(LEFT);
@@ -150,6 +186,21 @@ function writeHeading() {
   textSize(20);
   text("USA Population: " + popUSA, 10, 80);
   text("World Population: " + popWorld + " billion", 10, 105);
+}
+
+function writeNews() {
+  if (nextArticle == "" && millis() >= 3000) {
+    for (var k = 0; k < news.articles.length; k++) {
+      nextArticle = nextArticle + " // " + news.articles[k].title;
+      xArticle = width;
+    }
+  }
+
+  textSize(35);
+  fill(200, 200, 200);
+  noStroke();
+  text(nextArticle.toUpperCase(), xArticle, 40);
+  xArticle -= 2;
 }
 
 function displayCircles() {
@@ -185,7 +236,7 @@ function displayPi() {
   //Pi chart
   var angle = -1 * HALF_PI;
   var diameter = 150;
-  var xPos = 90;
+  var xPos = width - 2 * diameter;
   var yPos = height - 160;
   fill(0);
   stroke(0);
@@ -286,6 +337,17 @@ function updateDots() {
   }
 }
 
+function newArticle() {
+  var title = document.getElementById("article").value;
+  nextArticle = title;
+  xArticle = width;
+
+  title = title.toLowerCase();
+  if (title.includes("robot")) {
+    robotMode = true;
+  }
+}
+
 function createDots() {
   var newDots = Math.round((popUSA - previousPop) / dotConversion);
   for (var i = 0; i < newDots; i++) {
@@ -301,9 +363,9 @@ function initializeCircles() {
         if (dots[i].age < lifeExpectancy && dots[i].label === this.label)
           this.countDots++;
       }
-      this.size = 8 * this.countDots;
-      if (this.size > 100) {
-        this.size = 140;
+      this.size = 8 * this.countDots + 5;
+      if (this.size > 150) {
+        this.size = 150;
       }
       noFill();
       stroke(this.c);
@@ -320,8 +382,8 @@ function initializeCircles() {
   circles = new Array(19);
   var radius = .3 * height;
   var spacing = TWO_PI / (circles.length - 1);
-  var a = .5*width;
-  var b = .5*height;
+  var a = .35*width;
+  var b = .55*height;
   var angle = HALF_PI;
   circles[0] = {label: "Start", xPos: a, yPos: b, c: color(0)};
 
@@ -417,14 +479,14 @@ function initializeDots() {
         else if (this.xPos <= circles[i].xPos - limit)
           this.xPos++;
         else
-          this.xPos = this.xPos + random(-0.5, 0.5);
+          this.xPos = this.xPos + random(-0.8, 0.8);
 
         if (this.yPos >= circles[i].yPos + limit)
           this.yPos--;
         else if (this.yPos <= circles[i].yPos - limit)
           this.yPos++;
         else
-          this.yPos = this.yPos + random(-0.5, 0.5);
+          this.yPos = this.yPos + random(-0.8, 0.8);
       }
 
       else if (this.pos == 2) { //moving towards circle
