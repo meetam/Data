@@ -3,16 +3,19 @@ var DP05, DP02, DP03;
 var totalPop, agePop, racePop;
 var eduPop, eduAttainment;
 var laborPop, femalePop, industryPop;
-var earnings, femaleEarning, femaleEarning, minWage;
+var earnings, maleEarning, femaleEarning, minWage;
 var year, popUSA, previousPop, popWorld, popWorldArr, popGrowthUSA, popGrowthWorld;
 var dotConversion;
 var circle, circles;
-var dot, dots, numDots;
+var dot, dots, numDots, robotDot, robotDots;
 var pCollege, pHighSchool, pGradSchool, pUnemployed, pArmedForces, pIndustry, pTotal;
 var lifeExpectancy;
-var numFemales, numMales;
-var robotMode;
+var numFemales, numMales; //number of males/females in labor force
+var robotWord, robotMode, popRobots, numRobots, robotEarning, robotColor;
+var popGrowthRobot, previousRobotPop;
 var nextArticle, xArticle, news, newsSet, topNews;
+var warMode, warDuration, warStart;
+var femaleMode, nuclearMode;
 
 function preload() {
   DP05 = new Array(8);
@@ -115,9 +118,14 @@ function setup() {
   popWorldArr = [6.96, 7.04, 7.12, 7.21, 7.30, 7.38, 7.47, 7.55, 7.63];
   minWage = 7.25;
   popWorld = popWorldArr[0];
-  lifeExpectancy = 79;
+  lifeExpectancy = 78.6;
   popGrowthUSA = 0.7;
   popGrowthWorld = 1.07;
+  numFemales = Math.round(femalePop[0][0] * femalePop[0][1] * .01);
+  numMales = Math.round(laborPop[0][0] * laborPop[0][1] * .01) - numFemales;
+  robotDots = new Array();
+
+  //Probabilities
   pHighSchool = eduAttainment[0][3];
   pCollege = eduAttainment[0][6];
   pGradSchool = eduAttainment[0][7];
@@ -126,6 +134,19 @@ function setup() {
   //var newsSet = false;
   topNews = new Array();
   nextArticle = "";
+
+  //Robot Data
+  numRobots = 0;
+  robotEarning = 0;
+  robotMode = false;
+  popRobots = 0;
+  popGrowthRobot = 10;
+  previousRobotPop = 0;
+
+  //Modes
+  warMode = false;
+  femaleMode = false;
+  nuclearMode = false;
 
   //Make circles and dots
   initializeCircles();
@@ -138,7 +159,9 @@ function draw() {
   if (time % 1000 < 20) {
     incrementYear();
     updateProbabilities();
+    updateMode();
     updateDots();
+    updateRobotDots();
     createDots();
   }
 
@@ -153,7 +176,9 @@ function draw() {
 
 function incrementYear() {
   year++;
+  lifeExpectancy -= 0.01
   previousPop = popUSA;
+  previousRobotPop = popRobots;
   var i = year % 2010;
   if (i < totalPop.length) {
     popUSA = totalPop[year % 2010];
@@ -163,6 +188,17 @@ function incrementYear() {
   else {
     popUSA += Math.round(popGrowthUSA * popUSA * .01);
     popWorld = +((popWorld + +((popGrowthWorld * popWorld * .01).toFixed(2))).toFixed(2));
+    popRobots += Math.round(popGrowthRobot * popRobots * .01);
+    numRobots = popRobots;
+
+    if (popUSA < dotConversion * 50) {
+      popUSA = 0;
+      numFemales = 0;
+      numMales = 0;
+    }
+    if (popWorld < 1) {
+      popWorld = 0;
+    }
   }
 }
 
@@ -178,6 +214,9 @@ function writeHeading() {
   textSize(20);
   text("USA Population: " + popUSA, 10, 80);
   text("World Population: " + popWorld + " billion", 10, 105);
+  if (robotMode) {
+    text("AI Population: " + popRobots, 10, 130);
+  }
 }
 
 function writeNews() {
@@ -226,6 +265,10 @@ function displayDots() {
     if (dots[i].age < lifeExpectancy)
       dot.display.call(dots[i]);
   }
+
+  for (var i = 0; i < robotDots.length; i++) {
+    robotDot.display.call(robotDots[i]);
+  }
 }
 
 function displayMinWage() {
@@ -263,6 +306,9 @@ function drawBarGraph(var1, var2, var3, c1, c2, c3, xPos, yPos, diameter) {
   stroke(0);
   line(xPos, yPos, xPos, yPos + diameter);
   line(xPos, yPos + diameter, xPos + diameter, yPos + diameter);
+  if (var1 <= 0 && var2 <= 0 && var3 <= 0) {
+    return;
+  }
 
   var numBars = 3;
   if (var3 == 0) {
@@ -274,17 +320,15 @@ function drawBarGraph(var1, var2, var3, c1, c2, c3, xPos, yPos, diameter) {
   var max = Math.max(var1, var2);
   max = Math.max(max, var3);
 
-  if (max == var1) {
-    var h1 = diameter - 10;
-    var h2 = (diameter - 10) * var2 / var1;
-    var h3 = (diameter - 10) * var3 / var1;
-  }
-
-  else if (max == var2) {
-    var h1 = (diameter - 10) * var1 / var2 ;
-    var h2 = diameter - 10;
-    var h3 = (diameter - 10) * var3 / var2;
-  }
+  var h1 = (diameter - 10) * var1 / max;
+  var h2 = (diameter - 10) * var2 / max;
+  var h3 = (diameter - 10) * var3 / max;
+  if (max == var1)
+    h1 = diameter - 10;
+  else if (max == var2)
+    h2 = diameter - 10;
+  else if (max == var3)
+    var h3 = diameter - 10;
 
   noStroke();
   fill(c1);
@@ -303,20 +347,19 @@ function drawBarGraph(var1, var2, var3, c1, c2, c3, xPos, yPos, diameter) {
 function displayMF() {
   var i = year % 2010;
   if (i < DP05.length) {
-    numFemales = Math.round(femalePop[i][0] * femalePop[i][1] * .01);
-    numMales = Math.round(laborPop[i][0] * laborPop[i][1] * .01) - numFemales;
-    var total = numFemales + numMales;
-    numFemales = TWO_PI * numFemales / total;
-    numMales = TWO_PI - numFemales;
-
-    femaleEarning = earnings[i][1];
     maleEarning = earnings[i][0];
+    femaleEarning = earnings[i][1];
   }
 
   var maleColor = color(154, 205, 50);
   var femaleColor = color(250, 128, 114);
+  robotColor = color(50, 50, 50);
 
   //Pi chart
+  var total = numFemales + numMales + numRobots;
+  var fAngle = TWO_PI * numFemales / total;
+  var mAngle = TWO_PI * numMales / total;
+  var rAngle = TWO_PI - fAngle - mAngle;
   var angle = -1 * HALF_PI;
   var diameter = 150;
   var xPos = width - 2 * diameter;
@@ -327,10 +370,13 @@ function displayMF() {
   text("Labor Force", xPos, yPos - 90);
   text("Median Wage", xPos + diameter + 25, yPos - 90);
   fill(femaleColor);
-  arc(xPos, yPos, diameter, diameter, angle, angle + numFemales);
-  angle += numFemales;
+  arc(xPos, yPos, diameter, diameter, angle, angle + fAngle);
+  angle += fAngle;
   fill(maleColor);
-  arc(xPos, yPos, diameter, diameter, angle, angle + numMales);
+  arc(xPos, yPos, diameter, diameter, angle, angle + mAngle);
+  angle += mAngle;
+  fill(robotColor);
+  arc(xPos, yPos, diameter, diameter, angle, angle + rAngle);
 
   //Key
   textAlign(LEFT);
@@ -347,17 +393,27 @@ function displayMF() {
   fill(0);
   xKey += 30;
   text("Female", xKey, yKey + 15);
+  if (robotMode) {
+    xKey += 70;
+    fill(robotColor);
+    rect(xKey, yKey, 20, 20);
+    xKey += 30;
+    text("AI", xKey, yKey + 15);
+  }
 
   //Bar graph
-  xPos = xPos + (diameter / 2) + 25;
+  xPos = xPos + (diameter / 2) + 30;
   yPos = yPos - (diameter / 2);
-  drawBarGraph(femaleEarning, maleEarning, 0, maleColor, femaleColor, color(0),
-               xPos, yPos, diameter);
+  drawBarGraph(maleEarning, femaleEarning, robotEarning, maleColor, femaleColor,
+               robotColor, xPos, yPos, diameter);
 }
 
 function updateProbabilities() {
   var i = year % 2010;
   if (i < DP05.length) {
+    numFemales = Math.round(femalePop[i][0] * femalePop[i][1] * .01);
+    numMales = Math.round(laborPop[i][0] * laborPop[i][1] * .01) - numFemales;
+
     pCollege = eduAttainment[i][6];
     pHighSchool = eduAttainment[i][3];
     pGradSchool = eduAttainment[i][7];
@@ -372,14 +428,67 @@ function updateProbabilities() {
   }
 }
 
+function updateMode() {
+  if (warMode && year >= warStart + warDuration) {
+    endWar();
+  }
+
+  if (femaleMode) {
+    if (femaleEarning < maleEarning) {
+      femaleEarning += 1000;
+      if (femaleEarning > maleEarning) {
+        femaleEarning = maleEarning;
+      }
+    }
+    if (numFemales < numMales) {
+      numFemales += 1000000;
+      if (numFemales > numMales) {
+        numFemales = numMales;
+      }
+    }
+  }
+
+  if (nuclearMode) {
+    lifeExpectancy--;
+    pIndustry[8] += 10;
+    popGrowthUSA -= 0.1;
+    popGrowthWorld -= 0.1;
+  }
+
+  if (robotMode) {
+    pHighSchool -= 0.01;
+    pCollege -= 0.05;
+    pGradSchool -= 0.1;
+    robotEarning += 1000;
+    if (popRobots > popUSA) {
+      if (!circles[15].label.includes("AI")) {
+        circles[15].label = circles[15].label + "\n(AI Slaves)";
+        pIndustry[11] += 100;
+      }
+      pHighSchool = 0;
+      pCollege = 0;
+      pGradSchool = 0;
+    }
+  }
+}
+
 function updateDots() {
   //Update dots
   for (var i = 0; i < dots.length; i++) {
     dots[i].age++;
     if (dots[i].label === "Birth" && dots[i].age >= 4) { //go to elementary
-      dots[i].label = "Elementary School";
+      if (!robotMode || popRobots < popUSA) {
+        dots[i].label = "Elementary School";
+      }
+
+      else if (popRobots > popUSA) {
+        dots[i].label = "College";
+        dots[i].age = 25;
+      }
+
       dots[i].pos = 2; //means moving
     }
+
     if (dots[i].label === "Elementary School" && dots[i].age >= 14) { //go to high
       dots[i].label = "High School";
       dots[i].pos = 2;
@@ -405,23 +514,11 @@ function updateDots() {
             dots[i].label = circles[j + 4].label;
             break;
           }
-          prob += pIndustry[length]
+          prob += pIndustry[length];
         }
       }
       dots[i].pos = 2;
     }
-  }
-}
-
-function newArticle() {
-  var title = document.getElementById("article").value;
-  nextArticle = title;
-  xArticle = width;
-  topNews[topNews.length] = title;
-
-  title = title.toLowerCase();
-  if (title.includes("robot")) {
-    robotMode = true;
   }
 }
 
@@ -435,11 +532,24 @@ function createDots() {
 function initializeCircles() {
   circle = {
     display: function() {
-      this.countDots = 0;
+      var nDots = 0;
+      var rDots = 0;
       for (var i = 0; i < dots.length; i++) {
         if (dots[i].age < lifeExpectancy && dots[i].label === this.label)
-          this.countDots++;
+          nDots++;
       }
+      for (i = 0; i < robotDots.length; i++) {
+        if (robotDots[i].label === this.label) {
+          rDots++;
+        }
+      }
+
+      if (rDots > nDots) {
+        nextArticle = "AI has taken over " + this.label + " industry";
+        xArticle = width;
+      }
+
+      this.countDots = nDots + rDots;
       this.size = 8 * this.countDots + 5;
       if (this.size > 100) {
         this.size = 100;
@@ -534,11 +644,95 @@ function initializeCircles() {
   }
 }
 
+//Robot dots
+function updateRobotDots() {
+  robotDot = {
+    display: function() {
+      for (var i = 0; i < circles.length; i++) {
+        if (circles[i].label.includes(this.label)) {
+          break;
+        }
+      }
+
+      if (this.pos == 0) { //set initial position
+        var radius = circles[i].size / 2;
+        this.xPos = circles[i].xPos + random(-radius, radius);
+        this.yPos = circles[i].yPos + random(-radius, radius);
+        this.origX = this.xPos;
+        this.origY = this.yPos;
+        this.dir = "r";
+      }
+
+      else if (this.pos == 1) {
+        if (this.dir == "r") {
+          this.xPos += 1;
+          if (this.xPos >= this.origX + 10)
+            this.dir = "d";
+        }
+        else if (this.dir === "d") {
+          this.yPos += 1;
+          if (this.yPos >= this.origY + 10)
+            this.dir = "l";
+        }
+        else if (this.dir === "l") {
+          this.xPos -= 1;
+          if (this.xPos <= this.origX) {
+            this.dir = "u";
+            this.xPos = this.origX;
+          }
+        }
+        else {
+          this.yPos -= 1;
+          if (this.yPos <= this.origY) {
+            this.dir = "r";
+            this.yPos = this.origY;
+          }
+        }
+      }
+
+      fill(robotColor);
+      noStroke();
+      rect(this.xPos, this.yPos, 10, 10);
+      this.pos = 1; //position set
+    }
+  }
+
+  var numNewDots = Math.round((popRobots - previousRobotPop) / dotConversion);
+  var index = robotDots.length;
+  for (var i = 0; i < numNewDots; i++) {
+    robotDots[index] = {pos: 0, label: "Science and Technology"}; //initialize dot
+
+    var total = pTotal - pUnemployed - pCollege - pIndustry[11];
+    num = random(0, total);
+    var prob = pArmedForces;
+    if (num < prob) //|| circles[17].countDots == 0)
+      robotDots[index].label = "Armed Forces";
+    else {
+      for (var j = 0; j < pIndustry.length; j++) {
+        if (j != 11) {
+          if ((num >= prob && num < prob + pIndustry[j]) || circles[j + 4].countDots == 0) {
+            robotDots[index].label = circles[j + 4].label;
+            break;
+          }
+          prob += pIndustry[length];
+        }
+      }
+    }
+
+    if (popRobots > popUSA && robotDots[index].label === "Armed Forces") {
+      robotDots[index].label = "Science and Technology";
+    }
+
+    index++;
+  }
+}
+
+//Create initial dots
 function initializeDots() {
   dot = {
     display: function() {
       for (var i = 0; i < circles.length; i++) { //find corresponding circle
-        if (this.label === circles[i].label) {
+        if (circles[i].label.includes(this.label)) {
           break;
         }
       }
@@ -665,5 +859,181 @@ function initializeDots() {
   }
   for (i = index; i < index + num; i++) {
     dots[i] = {label: "Armed Forces", age: Math.round(random(19, 40)), pos: 0};
+  }
+}
+
+//Choose what happens based on article title
+function newArticle() {
+  var title = document.getElementById("article").value;
+  nextArticle = title;
+  xArticle = width;
+
+  var titleExists = false;
+  for (var i = 0; i < topNews.length; i++) {
+    if (topNews[i].toUpperCase() === title.toUpperCase()) {
+      titleExists = true;
+    }
+  }
+  if (!titleExists)
+    topNews[topNews.length] = title;
+
+  title = title.toLowerCase();
+  var pos = false;
+  var neg = false;
+  var positives = ["more", "up", "increase", "high"];
+  var negatives = ["less", "down", "decrease", "low"];
+  for (i = 0; i < positives.length; i++) {
+    if (title.includes(positives[i])) {
+      pos = true;
+      break;
+    }
+    if (title.includes(negatives[i])) {
+      neg = true;
+      break;
+    }
+  }
+
+  var robot = ["robot", "artificial intelligence", "technology"];
+  for (i = 0; i < robot.length; i++) {
+    if (title.includes(robot[i])) {
+      makeRobots();
+      break;
+    }
+  }
+
+  var health = ["cured", "cancer", "life", "health"];
+  for (i = 0; i < health.length; i++) {
+    if (title.includes(health[i])) {
+      changeHealth(pos, neg, health[i]);
+      break;
+    }
+  }
+
+  var war = ["war", "battle", "fight", "bomb"];
+  for (i = 0; i < war.length; i++) {
+    if (title.includes(war[i])) {
+      startWar();
+      break;
+    }
+  }
+
+  var environment = ["nuclear", "co2", "carbon dioxide", "fossil fuels", "environment"];
+  for (i = 0; i < environment.length; i++) {
+    if (title.includes(environment[i])) {
+      env(pos, neg, environment[i]);
+      break;
+    }
+  }
+
+  var education = ["education", "school", "college", "universit"];
+  for (i = 0; i < education.length; i++) {
+    if (title.includes(education[i])) {
+      school(pos, neg, education[i]);
+      break;
+    }
+  }
+
+  var female = ["women", "woman", "female", "girl"];
+  for (i = 0; i < female.length; i++) {
+    if (title.includes(female[i])) {
+      genderEquality();
+      break;
+    }
+  }
+
+  var wage = ["wage", "pay", "inflation"];
+  for (i = 0; i < wage.length; i++) {
+    if (title.includes(wage[i])) {
+      changeWage(pos, neg, wage[i]);
+      break;
+    }
+  }
+}
+
+function makeRobots() {
+  if (!robotMode) {
+    robotMode = true;
+    popRobots = 3000000;
+    robotEarning = 10000;
+    numRobots = popRobots; //number of robots in labor is same as population
+    pUnemployed += 20;
+  }
+}
+
+function changeHealth(pos, neg, word) {
+  if (neg == true) {
+    lifeExpectancy--;
+    popGrowthUSA -= 0.1;
+    pIndustry[9] -= 5;
+  }
+
+  else {
+    lifeExpectancy++;
+    popGrowthUSA += 0.1;
+    pIndustry[9] += 5;
+  }
+}
+
+function startWar() {
+  warMode = true;
+  pArmedForces += 30;
+  lifeExpectancy -= 10;
+  warDuration = random(5, 20);
+  warStart = year;
+}
+
+function endWar() {
+  warMode = false;
+  pArmedForces -= 30;
+  lifeExpectancy += 10;
+  nextArticle = "united nations declares peace";
+  if (nuclearMode) {
+    nextArticle += ", but nuclear residue remains"
+  }
+  topNews[topNews.length] = nextArticle;
+  xArticle = width;
+}
+
+function env(pos, neg, word) {
+  if (pos == true) {
+    lifeExpectancy += 5;
+  }
+  else {
+    lifeExpectancy -= 5;
+    if (word.toLowerCase() === "nuclear")
+      nuclearMode = true;
+  }
+}
+
+function school(pos, neg, word) {
+  if (pos == true) {
+    pHighSchool++;
+    pCollege += 5;
+    if (pCollege >= pHighSchool) {
+      pCollege = pHighSchool;
+    }
+    pGradSchool += 3;
+    if (pGradSchool >= pCollege) {
+      pGradSchool = pCollege;
+    }
+  }
+  else {
+    pHighSchool--;
+    pCollege -= 3;
+    pGradSchool -= 5;
+  }
+}
+
+function genderEquality() {
+  femaleMode = true;
+}
+
+function changeWage(pos, neg, word) {
+  if (pos == true || word.toLowerCase() === "inflation") {
+    minWage += 0.25;
+  }
+
+  else {
+    minWage -= 0.25;
   }
 }
