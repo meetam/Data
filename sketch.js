@@ -13,9 +13,10 @@ var lifeExpectancy;
 var numFemales, numMales; //number of males/females in labor force
 var robotWord, robotMode, popRobots, numRobots, robotEarning, robotColor;
 var popGrowthRobot, previousRobotPop;
-var nextArticle, xArticle, news, newsSet, topNews;
+var nextArticle, xArticle, news, newsSet, topNews, tArticle;
 var warMode, warDuration, warStart;
 var femaleMode, nuclearMode;
+var femaleArticles, robotArticles;
 
 function preload() {
   DP05 = new Array(8);
@@ -33,6 +34,8 @@ function preload() {
 
   //Load news
   var url = "https://newsapi.org/v2/top-headlines?sources=the-new-york-times&apiKey=d35b0088a38e45f1ad33040603272634";
+  url = "https://newsapi.org/v2/everything?sources=the-new-york-times&apiKey=d35b0088a38e45f1ad33040603272634";
+  url = "https://newsapi.org/v2/everything?q=technology&apiKey=d35b0088a38e45f1ad33040603272634";
   news = new Array(1);
   fetch(url).then(response => {
     return response.json();
@@ -131,9 +134,16 @@ function setup() {
   pGradSchool = eduAttainment[0][7];
 
   //News data
-  //var newsSet = false;
   topNews = new Array();
   nextArticle = "";
+  tArticle = -1;
+  femaleArticles = ["first female president of the united states",
+                    "50% of google engineers are women",
+                    "50% of fortune 500 ceo's are women"];
+  robotArticles = ["ai is able to complete complex human jobs",
+                   "robots are able to function fully as human beings",
+                   "ai takes over chief engineer's job at nasa",
+                   "google has a new ceo: a robot"];
 
   //Robot Data
   numRobots = 0;
@@ -220,10 +230,14 @@ function writeHeading() {
 }
 
 function writeNews() {
-  if (nextArticle == "" && millis() >= 3000) {
+  var time = millis();
+  if ((nextArticle == "" && millis() >= 3000) ||
+      (tArticle != -1 && time - tArticle > 20000)) {
+    nextArticle = "";
+    xArticle = width;
+    tArticle = -1;
     for (var k = 0; k < news.articles.length; k++) {
       nextArticle = nextArticle + " // " + news.articles[k].title;
-      xArticle = width;
     }
   }
 
@@ -232,6 +246,21 @@ function writeNews() {
   noStroke();
   text(nextArticle.toUpperCase(), xArticle, 40);
   xArticle -= 2;
+}
+
+function writeNextArticle(title) {
+  var titleExists = false;
+  for (var i = 0; i < topNews.length; i++) {
+    if (topNews[i].toUpperCase() === title.toUpperCase()) {
+      titleExists = true;
+    }
+  }
+  if (!titleExists) {
+    topNews[topNews.length] = title;
+    nextArticle = title;
+    xArticle = width;
+    tArticle = millis();
+  }
 }
 
 function writeTopNews() {
@@ -250,6 +279,7 @@ function writeTopNews() {
     str = str + topNews[i].toUpperCase() + "\n";
   }
   yPos += 20;
+  textSize(9);
   fill(200, 200, 200);
   text(str, xPos, yPos);
 }
@@ -289,6 +319,29 @@ function displayMinWage() {
   drawBarGraph(pHighSchool, pCollege, pGradSchool,
                col1, col2, col3, xPos, yPos, diameter);
 
+  //Key
+  textAlign(LEFT);
+  var xKey = xPos - diameter / 2 + 40;
+  var yKey = yPos + 160;
+  fill(col1);
+  rect(xKey, yKey, 20, 20);
+  fill(0);
+  xKey += 20;
+  text("High School", xKey, yKey + 15);
+  xKey += 80;
+  fill(col2);
+  rect(xKey, yKey, 20, 20);
+  fill(0);
+  xKey += 20;
+  text("Undergrad", xKey, yKey + 15);
+  xKey += 70;
+  fill(col3);
+  rect(xKey, yKey, 20, 20);
+  xKey += 20;
+  fill(0);
+  text("Graduate", xKey, yKey + 15);
+
+  //min wage
   xPos += (3 * diameter / 2) + 25;
   yPos += diameter / 2;
   fill(143, 40, 194);
@@ -363,7 +416,7 @@ function displayMF() {
   var angle = -1 * HALF_PI;
   var diameter = 150;
   var xPos = width - 2 * diameter;
-  var yPos = height - 140;
+  var yPos = height - 130;
   fill(0);
   noStroke();
   textSize(14);
@@ -433,6 +486,16 @@ function updateMode() {
     endWar();
   }
 
+  if (year >= 2080 && !femaleMode) {
+    femaleMode = true;
+    writeNextArticle(femaleArticles[Math.floor(random(femaleArticles.length))]);
+  }
+
+  if (year >= 3010 && !robotMode) {
+    robotMode = true;
+    writeNextArticle(robotArticles[Math.floor(random(robotArticles.length))]);
+  }
+
   if (femaleMode) {
     if (femaleEarning < maleEarning) {
       femaleEarning += 1000;
@@ -468,6 +531,9 @@ function updateMode() {
       pHighSchool = 0;
       pCollege = 0;
       pGradSchool = 0;
+      popGrowthWorld -= 0.1;
+      popGrowthUSA -= 0.1;
+      minWage -= 0.1;
     }
   }
 }
@@ -545,8 +611,7 @@ function initializeCircles() {
       }
 
       if (rDots > nDots) {
-        nextArticle = "AI has taken over " + this.label + " industry";
-        xArticle = width;
+        writeNextArticle("AI has taken over " + this.label + " industry");
       }
 
       this.countDots = nDots + rDots;
@@ -865,17 +930,7 @@ function initializeDots() {
 //Choose what happens based on article title
 function newArticle() {
   var title = document.getElementById("article").value;
-  nextArticle = title;
-  xArticle = width;
-
-  var titleExists = false;
-  for (var i = 0; i < topNews.length; i++) {
-    if (topNews[i].toUpperCase() === title.toUpperCase()) {
-      titleExists = true;
-    }
-  }
-  if (!titleExists)
-    topNews[topNews.length] = title;
+  writeNextArticle(title);
 
   title = title.toLowerCase();
   var pos = false;
@@ -986,12 +1041,12 @@ function endWar() {
   warMode = false;
   pArmedForces -= 30;
   lifeExpectancy += 10;
-  nextArticle = "united nations declares peace";
+  var title = "members of united nations signs peace treaty";
   if (nuclearMode) {
-    nextArticle += ", but nuclear residue remains"
+    title += ", but nuclear residue remains"
   }
-  topNews[topNews.length] = nextArticle;
-  xArticle = width;
+
+  writeNextArticle(title);
 }
 
 function env(pos, neg, word) {

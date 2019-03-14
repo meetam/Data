@@ -1,7 +1,6 @@
-303965272
+LINK TO WEBSITE: https://meetam.github.io/Data/
+
 1 dot = 3 million people
-
-
 
 Key for reading arrays created from data:
 DP05 - ACS demographic and housing estimates (population/age)
