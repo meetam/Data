@@ -328,23 +328,23 @@ function displayMinWage() {
   //Key
   noStroke();
   textAlign(LEFT);
-  var xKey = xPos - diameter / 2 + 40;
+  var xKey = xPos - diameter / 2 + 30;
   var yKey = yPos + 160;
   fill(col1);
   rect(xKey, yKey, 20, 20);
   fill(0);
-  xKey += 20;
+  xKey += 25;
   text("High School", xKey, yKey + 15);
-  xKey += 80;
+  xKey += 85;
   fill(col2);
   rect(xKey, yKey, 20, 20);
   fill(0);
-  xKey += 20;
+  xKey += 25;
   text("Undergrad", xKey, yKey + 15);
-  xKey += 70;
+  xKey += 75;
   fill(col3);
   rect(xKey, yKey, 20, 20);
-  xKey += 20;
+  xKey += 25;
   fill(0);
   text("Graduate", xKey, yKey + 15);
 
@@ -539,8 +539,8 @@ function updateMode() {
       pHighSchool = 0;
       pCollege = 0;
       pGradSchool = 0;
-      popGrowthWorld -= 0.01;
-      popGrowthUSA -= 0.01;
+      popGrowthWorld -= 0.05;
+      popGrowthUSA -= 0.05;
       minWage -= 0.01;
     }
   }
@@ -941,6 +941,7 @@ function initializeDots() {
 function newArticle() {
   var title = document.getElementById("article").value;
   writeNextArticle(title);
+  document.getElementById("article").value = "";
 
   title = title.toLowerCase();
   var pos = false;
