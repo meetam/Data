@@ -539,9 +539,9 @@ function updateMode() {
       pHighSchool = 0;
       pCollege = 0;
       pGradSchool = 0;
-      popGrowthWorld -= 0.1;
-      popGrowthUSA -= 0.1;
-      minWage -= 0.1;
+      popGrowthWorld -= 0.01;
+      popGrowthUSA -= 0.01;
+      minWage -= 0.01;
     }
   }
 }
