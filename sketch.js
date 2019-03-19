@@ -1016,7 +1016,7 @@ function newArticle() {
 }
 
 function makeRobots() {
-  if (!robotMode) {
+  if (!robotMode && femaleMode) {
     robotMode = true;
     popRobots = 3000000;
     robotEarning = 10000;
