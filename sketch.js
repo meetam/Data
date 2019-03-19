@@ -33,9 +33,10 @@ function preload() {
   }
 
   //Load news
-  var url = "https://newsapi.org/v2/top-headlines?sources=the-new-york-times&apiKey=d35b0088a38e45f1ad33040603272634";
-  url = "https://newsapi.org/v2/everything?sources=the-new-york-times&apiKey=d35b0088a38e45f1ad33040603272634";
-  url = "https://newsapi.org/v2/everything?q=technology&apiKey=d35b0088a38e45f1ad33040603272634";
+  var keyWords = ["future, artificial, technology, robot, women"];
+  var randWord = Math.floor(random(keyWords.length));
+  var url = "https://newsapi.org/v2/everything?q=" + keyWords[randWord];
+  url += "&apiKey=d35b0088a38e45f1ad33040603272634";
   news = new Array(1);
   fetch(url).then(response => {
     return response.json();
@@ -236,7 +237,12 @@ function writeNews() {
     nextArticle = "";
     xArticle = width;
     tArticle = -1;
-    for (var k = 0; k < news.articles.length; k++) {
+    var rIndex = Math.floor(random(news.articles.length));
+    for (var k = rIndex; k < news.articles.length; k++) {
+      nextArticle = nextArticle + " // " + news.articles[k].title;
+    }
+
+    for (k = 0; k < rIndex; k++) {
       nextArticle = nextArticle + " // " + news.articles[k].title;
     }
   }
@@ -320,6 +326,7 @@ function displayMinWage() {
                col1, col2, col3, xPos, yPos, diameter);
 
   //Key
+  noStroke();
   textAlign(LEFT);
   var xKey = xPos - diameter / 2 + 40;
   var yKey = yPos + 160;
@@ -352,7 +359,7 @@ function displayMinWage() {
   ellipse(xPos, yPos, di, di);
   fill(255);
   textAlign(CENTER);
-  text("$" + minWage, xPos, yPos);
+  text("$" + minWage.toFixed(2), xPos, yPos);
 }
 
 function drawBarGraph(var1, var2, var3, c1, c2, c3, xPos, yPos, diameter) {
@@ -491,8 +498,8 @@ function updateMode() {
     writeNextArticle(femaleArticles[Math.floor(random(femaleArticles.length))]);
   }
 
-  if (year >= 3010 && !robotMode) {
-    robotMode = true;
+  if (year >= 2130 && !robotMode) {
+    makeRobots();
     writeNextArticle(robotArticles[Math.floor(random(robotArticles.length))]);
   }
 
@@ -527,6 +534,7 @@ function updateMode() {
       if (!circles[15].label.includes("AI")) {
         circles[15].label = circles[15].label + "\n(AI Slaves)";
         pIndustry[11] += 100;
+        writeNextArticle("ai employs humans without pay");
       }
       pHighSchool = 0;
       pCollege = 0;
@@ -610,7 +618,9 @@ function initializeCircles() {
         }
       }
 
-      if (rDots > nDots) {
+      var impIndustries = ["Science and Technology", "Education and Health",
+                           "Construction", "Manufacturing"];
+      if (rDots > nDots && impIndustries.includes(this.label)) {
         writeNextArticle("AI has taken over " + this.label + " industry");
       }
 
@@ -1041,7 +1051,7 @@ function endWar() {
   warMode = false;
   pArmedForces -= 30;
   lifeExpectancy += 10;
-  var title = "members of united nations signs peace treaty";
+  var title = "members of united nations sign peace treaty";
   if (nuclearMode) {
     title += ", but nuclear residue remains"
   }
